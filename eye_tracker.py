@@ -30,8 +30,8 @@ def left_eye_detection(img):
     eyes = LEFT_EYE_CASCADE.detectMultiScale(img, 1.05, 5)
     if eyes is not None:
         for (ex, ey, ew, eh) in eyes:
-            # ey = adjust_eye_position(ey, eh)
-            # eh = adjust_eye_height(eh)
+            ey = adjust_eye_position(ey, eh)
+            eh = adjust_eye_height(eh)
             frame = img[ey:ey + eh, ex:ex + ew]
             cv2.rectangle(img, (ex, ey), (ex+ew, ey+eh), (255, 255, 255), 2)
             return frame
@@ -41,21 +41,21 @@ def right_eye_detection(img):
     eyes = RIGHT_EYE_CASCADE.detectMultiScale(img, 1.05, 5)
     if eyes is not None:
         for (ex, ey, ew, eh) in eyes:
-            # ey = adjust_eye_position(ey, eh)
-            # eh = adjust_eye_height(eh)
+            ey = adjust_eye_position(ey, eh)
+            eh = adjust_eye_height(eh)
             frame = img[ey:ey + eh, ex:ex + ew]
             cv2.rectangle(img, (ex, ey), (ex+ew, ey+eh), (255, 255, 255), 2)
             return frame
+
 
 def pupil_detection(img, threshold):
     _, img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)
     img = cv2.erode(img, None, iterations=2)
     img = cv2.dilate(img, None, iterations=4)
     img = cv2.medianBlur(img, 5)
-    pupil = DETECTOR.detect(img)
-    print(pupil)
-    if pupil is not None:
-        cv2.drawKeypoints(img, pupil, img, (255, 255, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    keypoints = DETECTOR.detect(img)
+    print(keypoints)
+    return keypoints
 
 def adjust_eye_height(eh):
     return int(round(eh // 1.5))
@@ -63,6 +63,7 @@ def adjust_eye_height(eh):
 
 def adjust_eye_position(ey, eh):
     return int(round(ey + (eh / 2.5)))
+
 
 def nothing(x):
     pass
@@ -88,14 +89,16 @@ def main():
                 pupil = pupil_detection(right_eye_frame, threshold)
                 if pupil is not None:
                     print('pupil found')
-                cv2.imshow('EyeMouse', right_eye_frame)
+                    cv2.drawKeypoints(right_eye_frame, pupil, right_eye_frame, (150,
+                                                                        255, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                    cv2.imshow('EyeMouse', right_eye_frame)
 
-            left_eye_frame = left_eye_detection(face_frame)
-            if left_eye_frame is not None:
-                pupil = pupil_detection(left_eye_frame, threshold)
-                if pupil is not None:
-                    print('pupil found')
-                cv2.imshow('EyeMouse', left_eye_frame)
+            # left_eye_frame = left_eye_detection(face_frame)
+            # if left_eye_frame is not None:
+            #     pupil = pupil_detection(left_eye_frame, threshold)
+            #     if pupil is not None:
+            #         print('pupil found')
+            #     cv2.imshow('EyeMouse', left_eye_frame)
         cv2.imshow('Eye_Mouse', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
