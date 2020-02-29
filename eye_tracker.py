@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-
+import pyautogui
 
 # init part
 FACE_CASCADE = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -13,7 +13,6 @@ DETECTOR = cv2.SimpleBlobDetector_create(DETECTOR_PARAMS)
 
 
 def face_detection(img):
-    # Make Face Grayscale
     faces = FACE_CASCADE.detectMultiScale(img, 1.05, 5)
     if faces is not None:
         for (x, y, w, h) in faces:
@@ -49,13 +48,15 @@ def right_eye_detection(img):
 
 
 def pupil_detection(img, threshold):
-    _, img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)
-    img = cv2.erode(img, None, iterations=2)
-    img = cv2.dilate(img, None, iterations=4)
-    img = cv2.medianBlur(img, 5)
-    keypoints = DETECTOR.detect(img)
-    print(keypoints)
-    return keypoints
+    # _, img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)
+    # Blur using 3 * 3 kernel. 
+    # img = cv2.blur(img, (3, 3)) 
+  
+    # Apply Hough transform on the blurred image. 
+    # detected_circles = cv2.HoughCircles(img,  cv2.HOUGH_GRADIENT, 1, 20, param1 = 50, param2 = 30, minRadius = 1, maxRadius = 40) 
+    # print(detected_circles)
+    return img
+
 
 def adjust_eye_height(eh):
     return int(round(eh // 1.5))
@@ -73,32 +74,46 @@ def main():
 
     cap = cv2.VideoCapture(0)
     cv2.namedWindow('Eye Mouse', cv2.WINDOW_KEEPRATIO)
-    cv2.createTrackbar('threshold', 'Eye Mouse', 36, 255, nothing)
+    cv2.namedWindow('EyeMouse', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('EyeMouse', 400,400)
+    cv2.createTrackbar('threshold', 'Eye Mouse', 90, 255, nothing)
     cv2.createTrackbar('Frame Rate', 'Eye Mouse', 1, 10, nothing)
-    # img = cv2.imread('picture.jpg')
+    cv2.createTrackbar('Eye Height', 'Eye Mouse', 1, 100, nothing)
 
     while True:
         cv2.waitKey(cv2.getTrackbarPos('Frame Rate', 'Eye Mouse') * 100)
-        threshold = r = cv2.getTrackbarPos('threshold', 'image')
+        threshold = cv2.getTrackbarPos('threshold', 'Eye Mouse')
+        eye_height = cv2.getTrackbarPos('Eye Height', 'Eye Mouse') * .1
         _, frame = cap.read()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         face_frame = face_detection(frame)
         if face_frame is not None:
-            right_eye_frame = right_eye_detection(face_frame)
+            right_eye_frame = right_eye_detection(face_frame, eye_height)
+            left_eye_frame = left_eye_detection(face_frame, eye_height)
             if right_eye_frame is not None:
-                pupil = pupil_detection(right_eye_frame, threshold)
-                if pupil is not None:
+                img = pupil_detection(right_eye_frame, threshold)
+                if img is not None:
                     print('pupil found')
-                    cv2.drawKeypoints(right_eye_frame, pupil, right_eye_frame, (150,
-                                                                        255, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-                    cv2.imshow('EyeMouse', right_eye_frame)
-
-            # left_eye_frame = left_eye_detection(face_frame)
-            # if left_eye_frame is not None:
-            #     pupil = pupil_detection(left_eye_frame, threshold)
-            #     if pupil is not None:
-            #         print('pupil found')
-            #     cv2.imshow('EyeMouse', left_eye_frame)
+                    # cv2.drawKeypoints(right_eye_frame, keypoints, img, (255, 255, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                    cv2.imshow('EyeMouse', img)
+            if left_eye_frame is not None:
+                img = pupil_detection(left_eye_frame, threshold)
+                if img is not None:
+                    # cv2.drawKeypoints(left_eye_frame, keypoints, img, (255, 255, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                    cv2.imshow('EyeMouse', img)
+        print(eye_height)
+        # pyautogui.moveTo(200, 200)
+        
+        # left_eye_frame = left_eye_detection(face_frame)
+        # if left_eye_frame is not None:
+        #     pupil = pupil_detection(left_eye_frame, threshold)
+        #     if pupil is not None:
+        #         print('pupil found')
+        #     cv2.imshow('EyeMouse', left_eye_frame)
+        # frame = cv2.GaussianBlur(frame, (7, 7), 0)
+        # print(threshold)
+        # _, frame = cv2.threshold(frame, threshold, 255, cv2.THRESH_BINARY_INV)
+        # _, contours = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         cv2.imshow('Eye_Mouse', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
