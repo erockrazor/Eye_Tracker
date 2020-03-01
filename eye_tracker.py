@@ -48,13 +48,13 @@ def right_eye_detection(img, eye_height, eye_position):
 
 
 def pupil_detection(img, threshold):
-    _, img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)
+    # _, img = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY_INV)
     # Blur using 3 * 3 kernel. 
-    img = cv2.blur(img, (3, 3)) 
+    # img = cv2.blur(img, (3, 3)) 
   
     # Apply Hough transform on the blurred image. 
-    detected_circles = cv2.HoughCircles(img,  cv2.HOUGH_GRADIENT, 1, 20) 
-    print(detected_circles)
+    # detected_circles = cv2.HoughCircles(img,  cv2.HOUGH_GRADIENT, 1, 20) 
+    # print(detected_circles)
     return img
 
 
@@ -74,8 +74,8 @@ def main():
 
     cap = cv2.VideoCapture(0)
     cv2.namedWindow('Eye Mouse', cv2.WINDOW_KEEPRATIO)
-    cv2.namedWindow('EyeMouse', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('EyeMouse', 400,400)
+    cv2.namedWindow('EyeMouse', cv2.WINDOW_KEEPRATIO)
+    # cv2.resizeWindow('EyeMouse', 400,400)
     cv2.createTrackbar('threshold', 'Eye Mouse', 90, 255, nothing)
     # cv2.createTrackbar('Frame Rate', 'Eye Mouse', 1, 10, nothing)
     cv2.createTrackbar('Eye Height', 'Eye Mouse', 22, 100, nothing)
@@ -92,11 +92,11 @@ def main():
         if face_frame is not None:
             right_eye_frame = right_eye_detection(face_frame, eye_height, eye_position)
             left_eye_frame = left_eye_detection(face_frame, eye_height, eye_position)
-            if right_eye_frame is not None:
-                img = pupil_detection(right_eye_frame, threshold)
-                if img is not None:
-                    # cv2.drawKeypoints(right_eye_frame, keypoints, img, (255, 255, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-                    cv2.imshow('EyeMouse', img)
+            # if right_eye_frame is not None:
+            #     img = pupil_detection(right_eye_frame, threshold)
+            #     if img is not None:
+            #         # cv2.drawKeypoints(right_eye_frame, keypoints, img, (255, 255, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            #         cv2.imshow('EyeMouse', img)
             if left_eye_frame is not None:
                 img = pupil_detection(left_eye_frame, threshold)
                 if img is not None:
